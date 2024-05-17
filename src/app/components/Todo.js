@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { collection, addDoc, getDocs, deleteDoc, doc } from 'firebase/firestore';
-
+import { getAuth } from "firebase/auth";
 import { db } from '../firebase';
 
 const Todo = () => {
@@ -25,8 +25,10 @@ const Todo = () => {
   // Add task to Firestore
   const addTask = async (e) => {
     e.preventDefault();
-    if (taskName !== '' && finishBy !== '') {
-      const newTask = { taskName, priority, finishBy, status };
+    const auth = getAuth();
+    const user = auth.currentUser;
+    if (taskName !== '' && finishBy !== '' && user) {
+      const newTask = { taskName, priority, finishBy, status, username: user.displayName || user.email };
       await addDoc(collection(db, 'tasks'), newTask);
       setTasks([...tasks, newTask]);
       setTaskName('');
@@ -34,11 +36,7 @@ const Todo = () => {
       setFinishBy('');
       setStatus('Pending');
     }
-  };
-
-  const deleteTask = async (id) => {
-    await deleteDoc(doc(db, 'tasks', id));
-    setTasks(tasks.filter(task => task.id !== id));
+    window.location.reload();
   };
 
   return (

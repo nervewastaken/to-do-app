@@ -11,6 +11,7 @@ const Navbar = () => {
     const handleSignIn = async () => {
         try {
             await googleSignIn();
+            
         } catch (err) {
             console.log(err);
         }
@@ -19,6 +20,7 @@ const Navbar = () => {
     const handleSignOut = async () => {
         try {
             await logOut();
+            window.location.reload();
         } catch (err) {
             console.log(err);
         }
@@ -43,9 +45,7 @@ const Navbar = () => {
                 <li className='p-2 cursor-pointer'>
                     <Link href='/about'>About</Link>
                 </li>
-                <li className='p-2 cursor-pointer'>
-                    <Link href='/profile'>Profile</Link>
-                </li>
+                
             </ul>
             {loading ? null : !user ? (
                 <ul className='flex'>

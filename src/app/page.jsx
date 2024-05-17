@@ -1,46 +1,52 @@
 "use client"
-import { useEffect, useState } from 'react';
+import React,{useEffect, useState} from 'react'
+import {UserAuth} from "./context/AuthContext"
+import { userAgentFromString } from 'next/server'
+import Todo from './components/Todo'
+import { collection, getDocs, deleteDoc, doc, updateDoc, query, where } from 'firebase/firestore';
 import { db } from './firebase';
-import { collection, getDocs,deleteDoc, doc,updateDoc } from 'firebase/firestore';
 
-
-
-export default function Home() {
+const Home = () => {
+  const {user} = UserAuth()
+  const [loading,setLoading] = useState(true);
   const [tasks, setTasks] = useState([]);
 
   useEffect(() => {
-    const fetchTasks = async () => {
-      const querySnapshot = await getDocs(collection(db, 'tasks'));
-      const tasksData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setTasks(tasksData);
-    };
-  
+    const checkAuth = async () => {
+      await new Promise((resolve) => setTimeout(resolve,50));
+      setLoading(false);
+    }
+    
+      const fetchTasks = async () => {
+        const q = query(collection(db, 'tasks'), where('username', '==', user.displayName || user.email));
+        const querySnapshot = await getDocs(q);
+        const tasksData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setTasks(tasksData);
+      
+    }
     fetchTasks();
-  }, []);
+    checkAuth();
+  }, [user]);
 
   const deleteTask = async (id) => {
     await deleteDoc(doc(db, 'tasks', id));
     setTasks(tasks.filter(task => task.id !== id));
   };
 
-  const markAsCompleted = async (id) => {
-    const updatedTasks = tasks.map(task => {
-      if (task.id === id) {
-        return { ...task, status: 'Completed' };
-      } else {
-        return task;
-      }
-    });
-
-    setTasks(updatedTasks);
-    // Update status in Firestore
-    await updateDoc(doc(db, 'tasks', id), {
-      status: 'Completed'
-    });
-  };
-
+  if (!user) {
+    return <p>Please login to view tasks</p>;
+  }
   return (
-    <main className="p-4 flex justify-center">
+    <div className='p-4'>
+      {loading ? (<p>
+        loading...
+      </p>) : user ? (
+        <div>
+        <p>
+          Welcome, {user.displayName} - you are logged in to the profile page
+        </p>
+        <Todo/>
+        <main className="p-4 flex justify-center">
       <table className="table-auto">
         <thead>
           <tr>
@@ -67,6 +73,16 @@ export default function Home() {
         </tbody>
       </table>
     </main>
-  );
+        </div>
+        
+      ):
+      (<p>Must be logged in to view this page</p>
+      )}
+
+      
+      
+    </div>
+  )
 }
 
+export default Home
