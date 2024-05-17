@@ -36,6 +36,22 @@ const Home = () => {
   if (!user) {
     return <p>Please login to view tasks</p>;
   }
+
+  const markAsCompleted = async (id) => {
+    const updatedTasks = tasks.map(task => {
+      if (task.id === id) {
+        return { ...task, status: 'Completed' };
+      } else {
+        return task;
+      }
+    });
+  
+    setTasks(updatedTasks);
+    // Update status in Firestore
+    await updateDoc(doc(db, 'tasks', id), {
+      status: 'Completed'
+    });
+  };
   return (
     <div className='p-4'>
       {loading ? (<p>
